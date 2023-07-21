@@ -1,0 +1,151 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+
+variables:
+  terragrunt_action: apply
+
+pool: Newlocal
+
+stages:
+- stage: build_and_test
+  jobs:
+  - job: "show_subscription_and_show_current_dir"
+    steps:
+    - script: az account list
+      displayName: 'show subscription'
+    - script: pwd && ls -ltra && env
+      displayName: 'show current dir'
+  - job: "terraform_init_validate_plan"
+    steps:
+    - task: Bash@3
+      name: "terraform_init"
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Write your commands here
+          terraform init
+        workingDirectory: 'terraform/azure/rundir_init'
+    - task: TerraformTaskV4@4
+      name: "validating_terraform_code"
+      inputs:
+        provider: 'azurerm'
+        command: 'validate'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/azure/rundir_init'
+    - task: Bash@3
+      name: "terraform_plan"
+      inputs:
+        targetType: 'inline'
+        script: |
+          terraform plan && rm -rf .terraform
+        workingDirectory: 'terraform/azure/rundir_init'
+
+- stage: publish_artifact
+  dependsOn: 'build_and_test'
+  jobs:
+  - job: "publish_artifacts"
+    steps:
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: '$(Pipeline.Workspace)'
+        artifact: 'terraform'
+        publishLocation: 'pipeline'
+
+- stage: start_deploy
+  dependsOn: 'publish_artifact'
+  jobs:
+  - deployment: start_deploy_approval
+    displayName: start_deploy_approval  # friendly name to display in the UI
+    environment: string  # target environment name and optionally a resource-name to record the deployment history; format: <environment-name>.<resource-name>
+    strategy:  # see deployment strategy schema
+      runOnce:
+        deploy:
+          steps:
+            - script: echo "starting deployment"
+  - job: "Install_prerequsites"
+    steps:
+    - task: Bash@3
+      name: "install_jq_make"
+      inputs:
+        targetType: 'inline'
+        script: |
+          sudo apt-get install jq -y && sudo apt-get install make -y
+        workingDirectory: 'terraform/azure/rundir_init'
+    - task: Bash@3
+      name: "install_terragrunt"
+      inputs:
+        targetType: 'inline'
+        script: |
+          if [ -f /usr/local/bin/terragrunt ]; then
+          echo "terragrunt is installed"
+          else
+          wget https://github.com/gruntwork-io/terragrunt/releases/download/v0.48.3/terragrunt_linux_amd64
+          mv terragrunt_linux_amd64 terragrunt
+          sudo cp terragrunt /usr/local/bin/
+          fi 
+        workingDirectory: 'terraform/azure/rundir_init'
+    - task: Bash@3
+      name: "install_terraform"
+      inputs:
+        targetType: 'inline'
+        script: |
+          if [ -f /usr/local/bin/terraform ]; then
+          echo "terraform is installed"
+          else
+          wget https://releases.hashicorp.com/terraform/1.5.1/terraform_1.5.1_linux_amd64.zip
+          sudo apt install zip -y && sudo unzip -ov "terraform_*amd64.zip" -d /usr/local/bin/
+          terraform version
+          fi
+        workingDirectory: 'terraform/azure/rundir_init'
+  - job: "terraform_init_statefile"
+    steps:
+    - task: Bash@3
+      name: "terraform_init"
+      inputs:
+        targetType: 'inline'
+        script: |
+            terraform init
+            terraform apply -auto-approve
+        workingDirectory: 'terraform/azure/rundir_init'
+    - task: Bash@3
+      name: "terraform_copy_state_to_backend"
+      inputs:
+        targetType: 'inline'
+        script: |
+          if [ -f terraform.tfstate ]; then
+          cp ../backend.tf . && terraform init -migrate-state --force-copy
+          rm -rf terraform.tfstate
+          fi
+        workingDirectory: 'terraform/azure/rundir_init'
+
+
+- stage: finalize_depoyment
+  dependsOn: 'publish_artifact'
+  jobs:
+  - job: "terragrunt_apply_all"
+    condition: eq(variables.terragrunt_action, 'apply')
+    steps:
+    - task: Bash@3
+      name: "terragrunt_apply_all"
+      inputs:
+        targetType: 'inline'
+        script: |
+          source ./set-env.sh
+          make apply-all-ha
+        workingDirectory: 'terraform/azure/terragrunt'
+  - job: "terragrunt_destroy_all"
+    condition:  eq(variables.terragrunt_action, 'destroy')
+    steps:
+    - task: Bash@3
+      name: "terragrunt_destroy_all"
+      inputs:
+        targetType: 'inline'
+        script: |
+          source ./set-env.sh
+          make destroy-all-ha
+        workingDirectory: 'terraform/azure/terragrunt'

@@ -1,0 +1,48 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool: Newlocal
+
+
+steps:
+- script: az account list
+  displayName: 'show subscription'
+
+- script: pwd && ls -ltra && env
+  displayName: 'show current dir'
+
+- task: Bash@3
+  name: "terraform_init"
+  inputs:
+    targetType: 'inline'
+    script: |
+      # Write your commands here
+      terraform init
+    workingDirectory: 'terraform/azure/rundir_init'
+- task: TerraformTaskV4@4
+  name: "validating_terraform_code"
+  inputs:
+    provider: 'azurerm'
+    command: 'validate'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/azure/rundir_init'
+
+#false 
+- task: Bash@3
+  name: "terraform_plan"
+  inputs:
+    targetType: 'inline'
+    script: |
+      terraform plan && rm -rf .terraform
+    workingDirectory: 'terraform/azure/rundir_init'
+
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Pipeline.Workspace)'
+    artifact: 'terraform'
+    publishLocation: 'pipeline'
