@@ -11,6 +11,7 @@ export TENANT_ID=$(az account show --query tenantId -o tsv)
 export BOOTSTRAP_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 export ORCHESTRATION_PATH=${THIS_DIR}/orchestration
 export MAIN_CONFIG_PATH=${THIS_DIR}/orchestration
+export RUN_INIT_DIR=${THIS_DIR}/run_init
 export MAIN_CONFIG_FILE_NAME=config_main.yaml
 export REMOTE_STATE_FILE_NAME=config_remote_state.yaml
 #export AD_GROUPS_FILE_NAME=config_main_ad_groups.yaml

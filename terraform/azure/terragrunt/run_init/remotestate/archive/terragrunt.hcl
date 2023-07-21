@@ -2,7 +2,7 @@
 locals {
   env_config      = yamldecode(file(format("%s/%s", get_env("MAIN_CONFIG_PATH"), get_env("ENV_CONFIG_FILE_NAME"))))
   # save tfstate to path from 'orchestration', irregardless of the relative path from the current dir
-  tfstate_key = replace(get_terragrunt_dir(), get_env("ORCHESTRATION_PATH"), "orchestration")
+  tfstate_key = replace(get_terragrunt_dir(), get_env("RUN_INIT_DIR"), "run_init")
 }
 
 # Remote State Configuration

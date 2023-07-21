@@ -10,21 +10,22 @@ variable "resource_group_name" {
 }
 
 variable "name" {
-  default     = "sampleappacr"
- 
+  default = "sampleappacr"
+
 }
 
 variable "container_name" {
-  type        = string
+  type = string
 }
 
 
 variable "account_replication_type" {
-  type        = string
+  type    = string
+  default = "LRS"
 }
 
 variable "tags" {
-  type        = map(string)
-  
+  type = map(string)
+
   default = null
 }

@@ -1,19 +1,19 @@
 variable "database_name" {
-  default     = "sampleappdb"
-  
+  default = "sampleappdb"
+
 }
 
 variable "databases" {
-type = map (map(string))
- 
+  type = map(map(string))
+
 }
 variable "dblogins" {
-type = map (map(string))
- 
+  type = map(map(string))
+
 }
 variable "database_server_name" {
-  default     = "sampleappserver-primary"
-  
+  default = "sampleappserver-primary"
+
 }
 
 variable "resource_group" {
@@ -23,22 +23,18 @@ variable "resource_group" {
   default = null
 }
 variable "administrator_login" {
-  default     = "sqladmin"
-  
+  default = "sqladmin"
+
 }
 variable "administrator_login_password" {
-  default     = ""
-  
+  default = ""
+
 }
 variable "db_sku" {
-  default     = "appuser"
-  
+  default = "appuser"
+
 }
-variable "logicapp_name" {
-  
-}
-# variable "local_ip_addresses" {
-#   type = list(string)
+
 
 # }
 
@@ -55,7 +51,7 @@ variable "resource_group_name" {
 
 
 variable "tags" {
-  type        = map(string)
-  
+  type = map(string)
+
   default = null
 }

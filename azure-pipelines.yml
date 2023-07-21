@@ -6,7 +6,7 @@
 trigger:
 - master
 
-pool: Newlocal
+pool: 'Newlocal'
 
 stages:
 - stage: build_and_test
@@ -17,29 +17,103 @@ stages:
       displayName: 'show subscription'
     - script: pwd && ls -ltra && env
       displayName: 'show current dir'
-  - job: "terraform_init_validate_plan"
+  - job: "Install_prerequsites"
     steps:
     - task: Bash@3
-      name: "terraform_init"
+      name: "install_jq_make"
+      inputs:
+        targetType: 'inline'
+        script: |
+          sudo apt-get install jq -y && sudo apt-get install make -y
+        workingDirectory: 'terraform/azure'
+    - task: Bash@3
+      name: "install_terragrunt"
+      inputs:
+        targetType: 'inline'
+        script: |
+          if [ -f /usr/local/bin/terragrunt ]; then
+          echo "terragrunt is installed"
+          else
+          wget https://github.com/gruntwork-io/terragrunt/releases/download/v0.48.3/terragrunt_linux_amd64
+          mv terragrunt_linux_amd64 terragrunt
+          sudo cp terragrunt /usr/local/bin/
+          fi 
+        workingDirectory: 'terraform/azure'
+    - task: Bash@3
+      name: "install_terraform"
+      inputs:
+        targetType: 'inline'
+        script: |
+          if [ -f /usr/local/bin/terraform ]; then
+          echo "terraform is installed"
+          else
+          wget https://releases.hashicorp.com/terraform/1.5.1/terraform_1.5.1_linux_amd64.zip
+          sudo apt install zip -y && sudo unzip -ov "terraform_*amd64.zip" -d /usr/local/bin/
+          terraform version
+          fi
+        workingDirectory: 'terraform/azure'
+  - job: "terragrunt_init_validate"
+    dependsOn: "Install_prerequsites"
+    steps:
+    - task: Bash@3
+      name: "terragrunt_init_remotestate"
       inputs:
         targetType: 'inline'
         script: |
           # Write your commands here
-          terraform init
-        workingDirectory: 'terraform/azure/rundir_init'
-    - task: TerraformTaskV4@4
-      name: "validating_terraform_code"
-      inputs:
-        provider: 'azurerm'
-        command: 'validate'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/azure/rundir_init'
+          source ../../set-env.sh
+          terragrunt init
+        workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'
     - task: Bash@3
-      name: "terraform_plan"
+      name: "terragrunt_init_infra"
+      condition: eq(variables.first_iteration, 'no')
       inputs:
         targetType: 'inline'
         script: |
-          terraform plan && rm -rf .terraform
-        workingDirectory: 'terraform/azure/rundir_init'
+          # Write your commands here
+          source ../set-env.sh
+          terragrunt run-all init --terragrunt-non-interactive --terragrunt-working-dir .
+        workingDirectory: 'terraform/azure/terragrunt/orchestration'
+    - task: Bash@3
+      name: "terragrunt_validate_remotestate"
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Write your commands here
+          source ../../set-env.sh
+          terragrunt validate
+        workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'
+    - task: Bash@3
+      name: "terragrunt_validate_infra"
+      condition: eq(variables.first_iteration, 'no')
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Write your commands here
+          source ../set-env.sh
+          terragrunt validate
+        workingDirectory: 'terraform/azure/terragrunt/orchestration'
+  - job: "terragrunt_plan"
+    dependsOn: "terragrunt_init_validate"
+    steps: 
+    - task: Bash@3
+      name: "terragrunt_plan_remotestate"
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Write your commands here
+          source ../../set-env.sh
+          terragrunt plan
+        workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'
+    - task: Bash@3
+      name: "terraform_plan_infra"
+      condition: eq(variables.first_iteration, 'no')
+      inputs:
+        targetType: 'inline'
+        script: |
+          source ../set-env.sh
+          terragrunt run-all plan --terragrunt-non-interactive --terragrunt-working-dir .
+        workingDirectory: 'terraform/azure/terragrunt/orchestration'
 
 - stage: publish_artifact
   dependsOn: 'build_and_test'
@@ -99,28 +173,29 @@ stages:
           terraform version
           fi
         workingDirectory: 'terraform/azure/rundir_init'
-  - job: "terraform_init_statefile"
+  - job: "terragrunt_init_statefile"
     dependsOn: 'start_deploy_approval'
     steps:
     - task: Bash@3
-      name: "terraform_init"
+      name: "terraform_migrate_state_to_backend"
+      condition: eq(variables.first_iteration, 'yes')
       inputs:
         targetType: 'inline'
         script: |
-            terraform init
-            terraform apply -auto-approve
-        workingDirectory: 'terraform/azure/rundir_init'
+            source ../../set-env.sh
+            terragrunt init
+            terragrunt apply -auto-approve && cp archive/terragrunt.hcl ../ && terragrunt init -migrate-state --force-copy
+        workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'
     - task: Bash@3
-      name: "terraform_copy_state_to_backend"
+      name: "terragrunt_init_remotestate"
+      condition: eq(variables.first_iteration, 'no')
       inputs:
         targetType: 'inline'
         script: |
-          if [ -f terraform.tfstate ]; then
-          cp ../backend.tf . && terraform init -migrate-state --force-copy
-          rm -rf terraform.tfstate
-          fi
-        workingDirectory: 'terraform/azure/rundir_init'
-
+            source ../../set-env.sh
+            cp archive/terragrunt.hcl ../ && terragrunt init
+            terragrunt apply -auto-approve
+        workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'
 
 - stage: finalize_depoyment
   dependsOn: 'start_deploy'
