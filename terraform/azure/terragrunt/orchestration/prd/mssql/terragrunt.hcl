@@ -8,9 +8,6 @@ locals {
   subscription_id = local.env_config.subscriptions.prod_workloads[0].id # This is the line to update to point to the proper sub
 }
 
-dependency "la" {
-  config_path = "../logicapp"
-}
 
 terraform {
   source = "../../../../modules/mssqlmodule"
@@ -43,9 +40,6 @@ inputs = {
   administrator_login = local.environment.mssqlserver.admin_login
   administrator_login_password = local.environment.mssqlserver.admin_password
   dblogins = local.environment.mssqlserver.dblogins
-  logicapp_name = dependency.la.outputs.name
-  #logicapp_name = local.environment.logicapp.name
- # local_ip_addresses = local.environment.mssqlserver.whitelisted_ips
 }
 
 # Generate a special provider.tf to address the generation of dual provider configuration because

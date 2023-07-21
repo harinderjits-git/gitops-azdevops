@@ -14,14 +14,6 @@ apply-prd-all-no-ha: apply-prd-aks apply-prd-mssql
 
 	
 
-apply-prddr-aks:
-	terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir orchestration/prddr/aks
-
-
-apply-prddr-mssql:
-	terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir orchestration/prddr/mssql
-
-
 apply-all-ha:
 	terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir orchestration/
 

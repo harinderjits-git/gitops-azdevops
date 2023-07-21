@@ -39,43 +39,6 @@ resource "azurerm_mssql_firewall_rule" "sql_server_fw_rule1" {
   end_ip_address   = each.value
 }
 
-data "azurerm_logic_app_workflow" "wf1" {
-  name = var.logicapp_name
-  resource_group_name = "${var.logicapp_name}-rg"
-}
-resource "azurerm_mssql_firewall_rule" "sql_server_fw_rule2" {
-    for_each = {
-    for  key, value in toset(data.azurerm_logic_app_workflow.wf1.connector_outbound_ip_addresses) :
-    key => value
-    if length(regexall("/", value)) > 0 
-  }
-
-  name             = "AllowIP logic app IP  ${cidrhost("${each.value}",0)}"
-  server_id        = azurerm_mssql_server.sql_server.id
-  start_ip_address = cidrhost("${each.value}",0)
-  end_ip_address   = cidrhost("${each.value}",-1)
-}
-
-resource "azurerm_mssql_firewall_rule" "sql_server_fw_rule3" {
-    for_each = {
-    for  key, value in toset(data.azurerm_logic_app_workflow.wf1.connector_outbound_ip_addresses) :
-    key => value
-    if length(regexall("/", value)) == 0 
-  }
-
-  name             = "AllowIP logic app IP ${each.key}"
-  server_id        = azurerm_mssql_server.sql_server.id
-  start_ip_address = each.value
-  end_ip_address   = each.value
-}
-# resource "azurerm_mssql_firewall_rule" "sql_server_fw_rule2" {
-#   count            = length(jsonencode(data.external.get_ip_addresses.result.ip_address_aks))
-#   name             = "AllowIPAKS${count.index}"
-#   server_id        = azurerm_mssql_server.sql_server.id
-#   start_ip_address = jsonencode(data.external.get_ip_addresses.result.ip_address_aks)[count.index]
-#   end_ip_address   = jsonencode(data.external.get_ip_addresses.result.ip_address_aks)[count.index]
-# }
-
 
 # The Azure SQL Database used in tests
 resource "azurerm_mssql_database" "db" {
