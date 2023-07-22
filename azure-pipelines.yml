@@ -4,7 +4,10 @@
 # https://aka.ms/yaml
 
 trigger:
-- master
+  batch: true
+  branches:
+    include:
+    - master
 
 pool: 'Newlocal'
 
@@ -13,7 +16,8 @@ stages:
   jobs:
   - job: "show_subscription_and_show_current_dir"
     steps:
-    - script: az account list
+    - script: |
+        az login --service-principal -u  $(ARM_CLIENT_ID) -p $(ARM_CLIENT_SECRET) --tenant $(TENANT_ID) && az account list
       displayName: 'show subscription'
     - script: pwd && ls -ltra && env
       displayName: 'show current dir'
@@ -61,7 +65,7 @@ stages:
         targetType: 'inline'
         script: |
           # Write your commands here
-          source ../../set-env.sh
+          source ../../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
           terragrunt init
         workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'
     - task: Bash@3
@@ -71,7 +75,7 @@ stages:
         targetType: 'inline'
         script: |
           # Write your commands here
-          source ../set-env.sh
+          source ../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
           terragrunt run-all init --terragrunt-non-interactive --terragrunt-working-dir .
         workingDirectory: 'terraform/azure/terragrunt/orchestration'
     - task: Bash@3
@@ -80,7 +84,7 @@ stages:
         targetType: 'inline'
         script: |
           # Write your commands here
-          source ../../set-env.sh
+          source ../../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
           terragrunt validate
         workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'
     - task: Bash@3
@@ -90,7 +94,7 @@ stages:
         targetType: 'inline'
         script: |
           # Write your commands here
-          source ../set-env.sh
+          source ../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
           terragrunt validate
         workingDirectory: 'terraform/azure/terragrunt/orchestration'
   - job: "terragrunt_plan"
@@ -102,7 +106,7 @@ stages:
         targetType: 'inline'
         script: |
           # Write your commands here
-          source ../../set-env.sh
+          source ../../set-env.sh  &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
           terragrunt plan
         workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'
     - task: Bash@3
@@ -111,12 +115,26 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          source ../set-env.sh
+          source ../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
           terragrunt run-all plan --terragrunt-non-interactive --terragrunt-working-dir .
         workingDirectory: 'terraform/azure/terragrunt/orchestration'
 
-- stage: publish_artifact
+- stage: test_using_checkov
   dependsOn: 'build_and_test'
+  jobs:
+  - job: "test_using_checkov"
+    steps:
+    - task: Bash@3
+      name: "install_checkov"
+      inputs:
+        targetType: 'inline'
+        script: |
+          pip3 install checkov
+          checkov --directory `pwd`
+        workingDirectory: 'terraform/azure/modules'
+
+- stage: publish_artifact
+  dependsOn: 'test_using_checkov'
   jobs:
   - job: "publish_artifacts"
     steps:
@@ -182,7 +200,7 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-            source ../../set-env.sh
+            source ../../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
             terragrunt init
             terragrunt apply -auto-approve && cp archive/terragrunt.hcl ../ && terragrunt init -migrate-state --force-copy
         workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'
@@ -192,7 +210,7 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-            source ../../set-env.sh
+            source ../../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
             cp archive/terragrunt.hcl ../ && terragrunt init
             terragrunt apply -auto-approve
         workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'

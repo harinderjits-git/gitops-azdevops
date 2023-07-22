@@ -6,9 +6,11 @@ THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # make setup-set-env
 
 # Assumes logged in to the core platform subscription
+
+# Assumes logged in to the core platform subscription
 export ENV_CONFIG_FILE_NAME=config_env_sampleapp.yaml
-export TENANT_ID=$(az account show --query tenantId -o tsv)
-export BOOTSTRAP_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+# export TENANT_ID=$(az account show --query tenantId -o tsv)
+# export BOOTSTRAP_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 export ORCHESTRATION_PATH=${THIS_DIR}/orchestration
 export MAIN_CONFIG_PATH=${THIS_DIR}/orchestration
 export RUN_INIT_DIR=${THIS_DIR}/run_init
@@ -39,11 +41,10 @@ echo ${MAIN_CONFIG_PATH}
 # unset ARM_CLIENT_ID
 # unset ARM_CLIENT_SECRET
 
-# echo "INFO - Configuring service principal authentication"
-# KV="kv-int-con-pv4ckie59t9m8"
-# ARM_CLIENT_ID=$(az keyvault secret show --vault-name ${KV} --subscription MS-INT-CON-Core-platform --name coreplatform-client-id -o json | jq -r ".value" )
-# ARM_CLIENT_SECRET=$(az keyvault secret show --vault-name ${KV} --subscription MS-INT-CON-Core-platform --name coreplatform-client-secret -o json | jq -r ".value" )
-# ARM_TENANT_ID="f1821f56-8d20-4902-bf65-bc7502e367e7"
+#echo "INFO - Configuring service principal authentication"
+# ARM_CLIENT_ID=$(ARM_CLIENT_ID)
+# ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET)
+#ARM_TENANT_ID=${TENANT_ID}
 # export ARM_CLIENT_ID
 # export ARM_CLIENT_SECRET
-# export ARM_TENANT_ID
+#export ARM_TENANT_ID

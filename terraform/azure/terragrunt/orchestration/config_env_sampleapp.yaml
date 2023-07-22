@@ -1,17 +1,17 @@
 subscriptions:
   prod_workloads:
-    - id: <value> #replace this value
+    - id: 153aa06c-284d-4f9c-9b5b-7b26eb8ca301 #replace this value
       service_tier: prod
 global:
-  tenant_id: <value> #replace this value
-  publickey: &publickey <value> #replace this value
-  db_password: &common_password <value> #replace this value 
+  tenant_id: 4e0f7edd-dd1e-4a85-861c-b49ba7f7d250 #replace this value
+  publickey: &publickey ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDOLVTSR7EdUieQBpqutfbvJWquMM5PhTLNVGm/LrF9+AlPBYXRUOjLjpe+Xi/7kYqs1AAl8ygniVVtz3KW8cattPcE8+Tyd+8KZO7xcaYGEDCYt2Q9Q2Na0wWZ+7MXmUk4b7D+gC62J8+9rRyIt5bjLyIYjmPmlva/UCW/7agzSy+En0XkgfZ7iP0A8sancaAKsgK7BozU7E3l6IKykAj9eENjOkcqYBSEFJdQ2nD8kk8sUZx9N1vhJywUVUi725DGImLM7ToBhYoEf5czQcyob4IZYQd/0t/ufAJuF0rprznPNQvlZF7JhyzsupF7oQAPUtT5mBr0ZBkkeitWLEUcNP952FgD7eGHXa4gONJPO4gQcdbz67FzXqGt47JA6CHO6Z4I6gGa/MN3JLQ9cCpYsoKih5wJb6ilozJYSll/1MBk7sl6IvchqoPTSZnXQ/RK/NcWuXBPlhWx5Fxw0XiSIrkkgodnvl9S3DItx3DUtFy5mAAVedBNTX/4y/JXZaM= hsingh@DESKTOP-424H6PI #replace this value
+  db_password: &common_password Fdgdfhfgj#12dgdfg #replace this value 
   locations:
     - "eastus"
     - "eastus2"
   remote_state:
-    rg_name: "remotestate202407011-rg"
-    storage_account: "remotestate202407011"
+    rg_name: "remotestate2024070211-rg"
+    storage_account: "remotestate2024070211"
     container_name: "tfstate"
   name_prefix:
     - sampleapp
@@ -44,6 +44,7 @@ prod_workloads:
       - prd
     tags:
       env: prodprimary
+      type: normal
     network: *network_config
     aks:
       name: 
@@ -55,7 +56,7 @@ prod_workloads:
       public_ssh_key: *publickey
       admin_username: aks_admin
       kubernetes_version: "1.25.6"
-      agent_count: 3
+      agent_count: 2
       aks_agent_vm_size: "Standard_D2_v2" # 8 core / 32GB
       zones:
         - "1"
