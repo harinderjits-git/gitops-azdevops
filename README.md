@@ -1,29 +1,17 @@
-# Sample application deployment on Kubernetes and SQLServer (Azure and GCP)
+# A Simple GitOps Pipeline using Terraform and Azure DevOps
 
-# Description 
+# Description
 
 This repositry shares :
-- The application code in golang
+
 - Terraform and Terragrunt code to provision all the infrastructure in Azure Cloud
-- helm chart to deploy application on k8s cluster
+- Azure DevOps Pipeline code
+
 # Prerequisites:
 
-Please have the below installed on your WSL
-
-- Install terraform
-- Install terragrunt
-- Install az CLI (for azure)
-- Install Docker
-- Install gcloud cli (for GCP)
+- An Azure subscription with resource providers for AKS, Storage Account, ACR, and Azure SQL registered. I am using a Free Tier Subscription.
+- An Azure DevOps Organization.
 
 # Usage
--  Usage for Azure has been detailed in https://medium.com/@harinderjitss/testing-business-continuity-of-sample-application-using-aks-and-azure-sql-server-aedf1637797d
- 
-- Usage for GCP has been detailed in https://medium.com/@harinderjitss/testing-business-continuity-of-a-sample-application-using-gke-and-gcp-cloudsql-a21167125757
 
-
-
-# credits
-
-Original sampleapp go code repository: https://github.com/gotochkin/sample-app
-
+- Usage for this repo is detailed in https://medium.com/@harinderjitss/a-simple-gitops-pipeline-using-terraform-and-azure-devops-6e3b3d044ac7
