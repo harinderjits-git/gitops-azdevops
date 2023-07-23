@@ -21,19 +21,19 @@ export REMOTE_STATE_FILE_NAME=config_remote_state.yaml
 ## EDIT VALUE ABOVE
 
 
-# Check for BOOTSTRAP_SUBSCRIPTION_ID
-if [ -z "${BOOTSTRAP_SUBSCRIPTION_ID}" ]; then
-		echo 'BOOTSTRAP_SUBSCRIPTION_ID is not set.'
-		exit 1;
-fi
+# # Check for BOOTSTRAP_SUBSCRIPTION_ID
+# if [ -z "${BOOTSTRAP_SUBSCRIPTION_ID}" ]; then
+# 		echo 'BOOTSTRAP_SUBSCRIPTION_ID is not set.'
+# 		exit 1;
+# fi
 
-if [ -z "${TENANT_ID}" ]; then
-		echo 'TENANT_ID is not set.'
-		exit 1;
-fi
-echo ${TENANT_ID}
-echo ${BOOTSTRAP_SUBSCRIPTION_ID}
-echo ${MAIN_CONFIG_PATH}
+# if [ -z "${TENANT_ID}" ]; then
+# 		echo 'TENANT_ID is not set.'
+# 		exit 1;
+# fi
+# echo ${TENANT_ID}
+# echo ${BOOTSTRAP_SUBSCRIPTION_ID}
+# echo ${MAIN_CONFIG_PATH}
 
 # echo "INFO - Unsetting ARM_* environment variables"
 # unset ARM_TENANT_ID

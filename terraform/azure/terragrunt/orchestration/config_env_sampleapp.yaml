@@ -10,8 +10,8 @@ global:
     - "eastus"
     - "eastus2"
   remote_state:
-    rg_name: "remotestate2024070211-rg"
-    storage_account: "remotestate2024070211"
+    rg_name: "remotestate202070213-rg"
+    storage_account: "remotestate202070213"
     container_name: "tfstate"
   name_prefix:
     - sampleapp
@@ -44,7 +44,7 @@ prod_workloads:
       - prd
     tags:
       env: prodprimary
-      type: normal
+      type: demo
     network: *network_config
     aks:
       name: 

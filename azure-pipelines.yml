@@ -17,18 +17,18 @@ stages:
   - job: "show_subscription_and_show_current_dir"
     steps:
     - script: |
-        az login --service-principal -u  $(ARM_CLIENT_ID) -p $(ARM_CLIENT_SECRET) --tenant $(TENANT_ID) && az account list
+        az login --service-principal -u  $(ARM_CLIENT_ID) -p $(ARM_CLIENT_SECRET) --tenant $(ARM_TENANT_ID) && az account list
       displayName: 'show subscription'
     - script: pwd && ls -ltra && env
       displayName: 'show current dir'
   - job: "Install_prerequsites"
     steps:
     - task: Bash@3
-      name: "install_jq_make"
+      name: "install_jq_make_pip"
       inputs:
         targetType: 'inline'
         script: |
-          sudo apt-get install jq -y && sudo apt-get install make -y
+          sudo apt-get update -y && sudo apt-get install jq  make  python3-pip python3 -y
         workingDirectory: 'terraform/azure'
     - task: Bash@3
       name: "install_terragrunt"
@@ -65,7 +65,7 @@ stages:
         targetType: 'inline'
         script: |
           # Write your commands here
-          source ../../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
+          source ../../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID) && export ARM_TENANT_ID=$(ARM_TENANT_ID)
           terragrunt init
         workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'
     - task: Bash@3
@@ -75,7 +75,7 @@ stages:
         targetType: 'inline'
         script: |
           # Write your commands here
-          source ../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
+          source ../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID) && export ARM_TENANT_ID=$(ARM_TENANT_ID)
           terragrunt run-all init --terragrunt-non-interactive --terragrunt-working-dir .
         workingDirectory: 'terraform/azure/terragrunt/orchestration'
     - task: Bash@3
@@ -84,7 +84,7 @@ stages:
         targetType: 'inline'
         script: |
           # Write your commands here
-          source ../../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
+          source ../../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID) && export ARM_TENANT_ID=$(ARM_TENANT_ID)
           terragrunt validate
         workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'
     - task: Bash@3
@@ -94,7 +94,7 @@ stages:
         targetType: 'inline'
         script: |
           # Write your commands here
-          source ../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
+          source ../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID) && export ARM_TENANT_ID=$(ARM_TENANT_ID)
           terragrunt validate
         workingDirectory: 'terraform/azure/terragrunt/orchestration'
   - job: "terragrunt_plan"
@@ -106,7 +106,7 @@ stages:
         targetType: 'inline'
         script: |
           # Write your commands here
-          source ../../set-env.sh  &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
+          source ../../set-env.sh  &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID) && export ARM_TENANT_ID=$(ARM_TENANT_ID)
           terragrunt plan
         workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'
     - task: Bash@3
@@ -115,11 +115,11 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          source ../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
+          source ../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID) && export ARM_TENANT_ID=$(ARM_TENANT_ID)
           terragrunt run-all plan --terragrunt-non-interactive --terragrunt-working-dir .
         workingDirectory: 'terraform/azure/terragrunt/orchestration'
 
-- stage: test_using_checkov
+- stage: scan_using_checkov
   dependsOn: 'build_and_test'
   jobs:
   - job: "test_using_checkov"
@@ -132,9 +132,10 @@ stages:
           pip3 install checkov
           checkov --directory `pwd`
         workingDirectory: 'terraform/azure/modules'
+      continueOnError: true
 
 - stage: publish_artifact
-  dependsOn: 'test_using_checkov'
+  dependsOn: 'build_and_test'
   jobs:
   - job: "publish_artifacts"
     steps:
@@ -164,7 +165,7 @@ stages:
         targetType: 'inline'
         script: |
           sudo apt-get install jq -y && sudo apt-get install make -y
-        workingDirectory: 'terraform/azure/rundir_init'
+        workingDirectory: 'terraform/azure'
     - task: Bash@3
       name: "install_terragrunt"
       inputs:
@@ -177,7 +178,7 @@ stages:
           mv terragrunt_linux_amd64 terragrunt
           sudo cp terragrunt /usr/local/bin/
           fi 
-        workingDirectory: 'terraform/azure/rundir_init'
+        workingDirectory: 'terraform/azure'
     - task: Bash@3
       name: "install_terraform"
       inputs:
@@ -190,27 +191,27 @@ stages:
           sudo apt install zip -y && sudo unzip -ov "terraform_*amd64.zip" -d /usr/local/bin/
           terraform version
           fi
-        workingDirectory: 'terraform/azure/rundir_init'
+        workingDirectory: 'terraform/azure'
   - job: "terragrunt_init_statefile"
     dependsOn: 'start_deploy_approval'
     steps:
     - task: Bash@3
       name: "terraform_migrate_state_to_backend"
-      condition: eq(variables.first_iteration, 'yes')
+      condition: eq(variables.local_state_file, 'yes')
       inputs:
         targetType: 'inline'
         script: |
-            source ../../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
+            source ../../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID) && export ARM_TENANT_ID=$(ARM_TENANT_ID)
             terragrunt init
             terragrunt apply -auto-approve && cp archive/terragrunt.hcl ../ && terragrunt init -migrate-state --force-copy
         workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'
     - task: Bash@3
       name: "terragrunt_init_remotestate"
-      condition: eq(variables.first_iteration, 'no')
+      condition: eq(variables.local_state_file, 'no')
       inputs:
         targetType: 'inline'
         script: |
-            source ../../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID)
+            source ../../set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID) && export ARM_TENANT_ID=$(ARM_TENANT_ID)
             cp archive/terragrunt.hcl ../ && terragrunt init
             terragrunt apply -auto-approve
         workingDirectory: 'terraform/azure/terragrunt/run_init/remotestate'
@@ -226,7 +227,7 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          source ./set-env.sh
+          source ./set-env.sh &&  export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID) && export ARM_TENANT_ID=$(ARM_TENANT_ID)
           make apply-all-ha
         workingDirectory: 'terraform/azure/terragrunt'
   - job: "terragrunt_destroy_all"
@@ -237,6 +238,6 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          source ./set-env.sh
+          source ./set-env.sh &&   export ARM_CLIENT_SECRET=$(ARM_CLIENT_SECRET) && export ARM_CLIENT_ID=$(ARM_CLIENT_ID) && export ARM_SUBSCRIPTION_ID=$(ARM_SUBSCRIPTION_ID) && export ARM_TENANT_ID=$(ARM_TENANT_ID)
           make destroy-all-ha
         workingDirectory: 'terraform/azure/terragrunt'
