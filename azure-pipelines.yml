@@ -11,6 +11,9 @@ trigger:
 
 pool: 'Newlocal'
 
+variables:
+- group: vg1
+
 stages:
 - stage: build_and_test
   jobs:
