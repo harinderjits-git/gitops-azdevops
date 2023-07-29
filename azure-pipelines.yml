@@ -153,7 +153,7 @@ stages:
   jobs:
   - deployment: start_deploy_approval
     displayName: start_deploy_approval  # friendly name to display in the UI
-    environment: 'test-approval'  # target environment name and optionally a resource-name to record the deployment history; format: <environment-name>.<resource-name>
+    environment: 'test-approval-check'  # target environment name and optionally a resource-name to record the deployment history; format: <environment-name>.<resource-name>
     strategy:  # see deployment strategy schema
       runOnce:
         deploy:

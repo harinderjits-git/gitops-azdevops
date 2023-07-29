@@ -24,7 +24,7 @@ resource "azuredevops_variable_group" "example" {
     content {
       name      = variable.value.name
       value     = variable.value.equalto
-      is_secret = true
+      is_secret = false
 
     }
 
@@ -40,15 +40,15 @@ resource "azuredevops_agent_pool" "example" {
 }
 
 
+
 resource "azuredevops_agent_queue" "example" {
   project_id    = azuredevops_project.example.id
   agent_pool_id = azuredevops_agent_pool.example.id
 }
 
 # Grant access to queue to all pipelines in the project
-resource "azuredevops_resource_authorization" "example" {
+resource "azuredevops_pipeline_authorization" "example" {
   project_id  = azuredevops_project.example.id
   resource_id = azuredevops_agent_queue.example.id
   type        = "queue"
-  authorized  = true
 }

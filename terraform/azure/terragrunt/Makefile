@@ -1,6 +1,9 @@
 # -------------------------------------
 # APPLY - 
 # -------------------------------------
+apply-azdo-all:
+	terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir azdo/
+
 apply-prd-acr:
 	terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir orchestration/prd/acr
 
@@ -15,8 +18,10 @@ apply-prd-all-no-ha: apply-prd-aks apply-prd-mssql
 	
 
 apply-all-ha:
-	terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir orchestration/
+	terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir azdo/
 
+destroy-azdo-all:
+	terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir azdo
 
 destroy-all-ha:
 	terragrunt run-all destroy --terragrunt-non-interactive --terragrunt-working-dir orchestration/

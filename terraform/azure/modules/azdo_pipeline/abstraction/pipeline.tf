@@ -2,8 +2,6 @@
 
 data "azuredevops_project" "example" {
   name = var.project_name
-
-
 }
 
 data "azuredevops_git_repository" "example" {
