@@ -16,15 +16,13 @@ apply-prd-mssql:
 apply-prd-all-no-ha: apply-prd-aks apply-prd-mssql
 
 	
-
 apply-all-ha:
-	terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir azdo/
+	terragrunt run-all destroy --terragrunt-non-interactive --terragrunt-working-dir orchestration/
 
-destroy-azdo-all:
-	terragrunt run-all destroy --terragrunt-non-interactive --terragrunt-working-dir azdo
 
 destroy-all-ha:
 	terragrunt run-all destroy --terragrunt-non-interactive --terragrunt-working-dir orchestration/
+
 
 # ---
 # ------------------------------------------------------------------------------
