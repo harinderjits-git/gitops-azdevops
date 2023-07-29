@@ -21,7 +21,7 @@ apply-all-ha:
 	terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir azdo/
 
 destroy-azdo-all:
-	terragrunt run-all apply --terragrunt-non-interactive --terragrunt-working-dir azdo
+	terragrunt run-all destroy --terragrunt-non-interactive --terragrunt-working-dir azdo
 
 destroy-all-ha:
 	terragrunt run-all destroy --terragrunt-non-interactive --terragrunt-working-dir orchestration/
